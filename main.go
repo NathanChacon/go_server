@@ -11,6 +11,7 @@ import (
 	itemController "test.com/events/controllers/itemController"
 	"test.com/events/controllers/userController"
 	"test.com/events/database"
+	authMiddleware "test.com/events/middleware/auth"
 )
 
 func initEnvVariables() {
@@ -31,8 +32,12 @@ func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/create-account", userController.CreateAccount).Methods("POST")
 	router.HandleFunc("/login", userController.Login).Methods("POST")
-	router.HandleFunc("/items", itemController.GetItems).Methods("GET")
-	router.HandleFunc("/items", itemController.PostItem).Methods("POST")
+
+	protected := router.PathPrefix("/").Subrouter()
+	protected.Use(authMiddleware.AuthMiddleware)
+
+	protected.HandleFunc("/items", itemController.GetItems).Methods("GET")
+	protected.HandleFunc("/items", itemController.PostItem).Methods("POST")
 
 	http.ListenAndServe(":8080", router)
 }
