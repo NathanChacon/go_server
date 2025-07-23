@@ -10,6 +10,7 @@ type Item struct {
 	Id          int    `json:"id"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
+	UserId      string `json:"-"`
 }
 
 func StartDb(dbParam *sql.DB) {
@@ -40,8 +41,8 @@ func GetAllItem() ([]Item, error) {
 
 func PostItem(item Item) error {
 	_, err := db.Exec(
-		"INSERT INTO item (id, title, description) VALUES (?, ?, ?)",
-		item.Id, item.Title, item.Description,
+		"INSERT INTO item (id, title, description, userId) VALUES (?, ?, ?, ?)",
+		item.Id, item.Title, item.Description, item.UserId,
 	)
 
 	return err

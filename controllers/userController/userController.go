@@ -2,7 +2,6 @@ package userController
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/mail"
 	"os"
@@ -25,7 +24,7 @@ func generateLoginJwt(userId string) (string, error) {
 	var jwtKey = []byte(secret)
 
 	claims := &jwt.RegisteredClaims{
-		Subject:   fmt.Sprintf("%d", userId),
+		Subject:   userId,
 		ExpiresAt: jwt.NewNumericDate(idExpirationDate),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 	}

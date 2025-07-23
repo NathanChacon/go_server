@@ -31,9 +31,13 @@ func PostItem(response http.ResponseWriter, request *http.Request) {
 		return
 	}
 
+	userID, _ := request.Context().Value("userID").(string)
+
+	newItem.UserId = userID
+
 	err := itemModel.PostItem(newItem)
 
 	if err != nil {
-		fmt.Print("error")
+		fmt.Print("error", err, userID)
 	}
 }
