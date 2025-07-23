@@ -2,6 +2,7 @@ package userController
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/mail"
 	"os"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
+	apierror "test.com/events/apiError"
 	"test.com/events/model/userModel"
 )
 
@@ -49,41 +51,52 @@ func CreateAccount(response http.ResponseWriter, request *http.Request) {
 	errJson := decoder.Decode(&newUser)
 
 	if errJson != nil {
-		http.Error(response, "Wrong payload", http.StatusBadRequest)
+		errorType := apierror.ErrBadRequest
+		apierror.HandleError(errorType, response)
+		return
+	}
+	fmt.Print(newUser)
+	if newUser.Password == "" || newUser.Email == "" || newUser.Name == "" {
+		errorType := apierror.ErrBadRequest
+		apierror.HandleError(errorType, response)
 		return
 	}
 
 	emailAlreadyRegistered, emailErr := userModel.EmailExists(newUser.Email)
 
 	if emailErr != nil {
-		http.Error(response, "Internal error email", http.StatusInternalServerError)
+		apierror.HandleError(emailErr, response)
 		return
 	}
 
 	if emailAlreadyRegistered {
-		http.Error(response, "Email already in use", http.StatusBadRequest)
+		errorType := apierror.ErrBadRequest
+		apierror.HandleError(errorType, response)
 		return
 	}
 
 	if len(newUser.Name) < 6 || len(newUser.Name) > 20 {
-		http.Error(response, "Name must be between 6 and 20 characters", http.StatusBadRequest)
+		errorType := apierror.ErrBadRequest
+		apierror.HandleError(errorType, response)
 		return
 	}
 
 	if len(newUser.Password) < 6 || len(newUser.Password) > 16 {
-		http.Error(response, "Password must be between 6 and 16 characters", http.StatusBadRequest)
+		errorType := apierror.ErrBadRequest
+		apierror.HandleErrorWithCustomDescription(errorType, response, "password must be at minimun 6 characters and maximun 16 charactes")
 		return
 	}
 
 	if !isValidEmail(newUser.Email) {
-		http.Error(response, "Invalid email format", http.StatusBadRequest)
+		errorType := apierror.ErrBadRequest
+		apierror.HandleErrorWithCustomDescription(errorType, response, "invalid email")
 		return
 	}
 
 	hashedPassword, errBcrypt := bcrypt.GenerateFromPassword([]byte(newUser.Password), bcrypt.DefaultCost)
 
 	if errBcrypt != nil {
-		http.Error(response, "Internal error bcrypt", http.StatusInternalServerError)
+		apierror.HandleError(errBcrypt, response)
 		return
 	}
 
@@ -92,14 +105,14 @@ func CreateAccount(response http.ResponseWriter, request *http.Request) {
 	createdUserId, createUserError := userModel.CreateUser(newUser)
 
 	if createUserError != nil {
-		http.Error(response, "Internal error create user", http.StatusInternalServerError)
+		apierror.HandleError(createUserError, response)
 		return
 	}
 
 	tokenString, err := generateLoginJwt(createdUserId)
 
 	if err != nil {
-		http.Error(response, "Failed to generate token", http.StatusInternalServerError)
+		apierror.HandleError(err, response)
 		return
 	}
 
