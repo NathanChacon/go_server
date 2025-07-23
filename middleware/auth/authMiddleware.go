@@ -8,9 +8,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtKey = []byte(os.Getenv("JWT_SECRET"))
-
 func AuthMiddleware(next http.Handler) http.Handler {
+	var jwtKey = []byte(os.Getenv("JWT_SECRET"))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("auth_token")
 		if err != nil {

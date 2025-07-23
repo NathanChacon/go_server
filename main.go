@@ -1,11 +1,10 @@
-// TODO add middlewares to protected logged in routes
-
 package main
 
 import (
 	"log"
 	"net/http"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
 	itemController "test.com/events/controllers/itemController"
@@ -39,5 +38,14 @@ func main() {
 	protected.HandleFunc("/items", itemController.GetItems).Methods("GET")
 	protected.HandleFunc("/items", itemController.PostItem).Methods("POST")
 
-	http.ListenAndServe(":8080", router)
+	corsHandler := handlers.CORS(
+		handlers.AllowedOriginValidator(func(origin string) bool {
+			return origin == "http://localhost:4321"
+		}),
+		handlers.AllowedHeaders([]string{"Content-Type", "Authorization", "Cookie"}),
+		handlers.AllowedMethods([]string{"GET", "POST", "OPTIONS"}),
+		handlers.AllowCredentials(),
+	)(router)
+
+	http.ListenAndServe(":8080", corsHandler)
 }
